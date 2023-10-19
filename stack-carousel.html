@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>stack-carousel</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+      }
+      .box {
+        width: 200px;
+        height: 300px;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        margin-left: -100px;
+        margin-top: -150px;
+        border-radius: 12px;
+        box-shadow: 0 3px 6px #999;
+      }
+      .box1 {
+        background-color: #c80d0d;
+        z-index: 100;
+      }
+      .box2 {
+        background-color: #08d62a;
+        z-index: 10;
+      }
+      .box3 {
+        background-color: #0582ac;
+        z-index: 1;
+      }
+      #btn {
+        position: absolute;
+        top: 50px;
+        left: 50%;
+        width: 120px;
+        margin-left: -60px;
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <button id="btn">自动播放</button>
+      <div class="box box1"></div>
+      <div class="box box2"></div>
+      <div class="box box3"></div>
+    </div>
+    <script>
+      class Client {
+        constructor() {
+          this.autoPlayDelay = 1000;
+          this.isAuto = false;
+          this.timer = null;
+          this.indexList = [1, 2, 3];
+          this.boxList = [
+            { index: 1, el: document.querySelector(".box1") },
+            { index: 2, el: document.querySelector(".box2") },
+            { index: 3, el: document.querySelector(".box3") },
+          ];
+          this.init();
+        }
+        init() {
+          this.boxList.forEach(({ el }) => this.registerSlide(el));
+          this.setIndex();
+          document.getElementById("btn").addEventListener("click", (e) => {
+            if (!this.isAuto) {
+              this.autoPlay();
+            } else {
+              clearTimeout(this.timer);
+              this.timer = null;
+            }
+            this.isAuto = !this.isAuto;
+            e.target.innerHTML = this.isAuto ? "取消自动播放" : "自动播放";
+          });
+        }
+        autoPlay() {
+          if (this.timer) {
+            clearTimeout(this.timer);
+          }
+          this.timer = setTimeout(() => {
+            const topEl = this.boxList.find(
+              ({ index }) => index === this.indexList[0]
+            ).el;
+            topEl.style.transform = `translateX(-200px)`;
+            topEl.style.transition = "transform 0.5s ease";
+            clearTimeout(this.timer);
+            this.timer = setTimeout(() => {
+              topEl.style.transition = "none";
+              this.indexList.push(this.indexList.shift());
+              this.setIndex();
+              this.autoPlay();
+            }, 300);
+          }, this.autoPlayDelay);
+        }
+        setIndex() {
+          this.indexList.forEach((item, i) => {
+            const el = this.boxList.find(({ index }) => index === item).el;
+            el.style.zIndex = 300 / (i + 1);
+            el.style.transition = "transform 0.3s ease";
+            el.style.transform = `translateY(${300 * 0.05 * i}px) scale(${
+              1 - 0.05 * i
+            })`;
+          });
+        }
+        registerSlide(el) {
+          let startX = 0,
+            offsetX = 0;
+          const touchStartListener = dragStartFactory("touch").bind(this);
+          const moveStartListener = dragStartFactory("mouse").bind(this);
+          const touchListener = dragFactory("touch").bind(this);
+          const moveListener = dragFactory("mouse").bind(this);
+          const touchEndListener = dragEndFactory("touch").bind(this);
+          const mouseEndListener = dragEndFactory("mouse").bind(this);
+          el.addEventListener("touchstart", touchStartListener);
+          el.addEventListener("mousedown", moveStartListener);
+          function dragStartFactory(trigger) {
+            return function (e) {
+              if (trigger === "touch") {
+                startX = e.touches[0].clientX;
+              } else {
+                startX = e.clientX;
+              }
+              if (this.timer) {
+                clearTimeout(this.timer);
+              }
+              document.addEventListener("touchmove", touchListener);
+              document.addEventListener("mousemove", moveListener);
+              document.addEventListener("touchend", touchEndListener);
+              document.addEventListener("mouseup", mouseEndListener);
+            };
+          }
+          function dragFactory(trigger) {
+            return function (e) {
+              if (trigger === "touch") {
+                offsetX = e.touches[0].clientX - startX;
+              } else {
+                console.log(e);
+                offsetX = e.clientX - startX;
+              }
+              el.style.transform = `translateX(${offsetX}px)`;
+            };
+          }
+          function dragEndFactory(trigger) {
+            return function (e) {
+              document.removeEventListener("touchmove", touchListener);
+              document.removeEventListener("mousemove", moveListener);
+              document.removeEventListener("touchend", touchEndListener);
+              document.removeEventListener("mouseup", mouseEndListener);
+              let isChange = false;
+              if (Math.abs(offsetX) < 100) {
+                offsetX = 0;
+                el.style.transition = "transform 0.1s ease";
+              } else if (offsetX < -100) {
+                offsetX = -200;
+                isChange = true;
+                el.style.transition = "transform 0.3s ease";
+              } else {
+                offsetX = 200;
+                isChange = true;
+                el.style.transition = "transform 0.3s ease";
+              }
+              el.style.transform = `translateX(${offsetX}px)`;
+              setTimeout(() => {
+                el.style.transition = "none";
+                if (isChange) {
+                  this.indexList.push(this.indexList.shift());
+                  this.setIndex();
+                }
+                if (this.isAuto) {
+                  this.autoPlay();
+                }
+              }, 300);
+            };
+          }
+        }
+      }
+      window.onload = () => {
+        new Client();
+      };
+    </script>
+  </body>
+</html>

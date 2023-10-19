@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>css-matrix</title>
+    <style>
+      .container {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+      }
+      .grid {
+        width: 10000px;
+        height: 10000px;
+        background-size: 100px 100px;
+        transition: transform 0.2s ease;
+        background-color: rgba(0, 0, 0, 0.9);
+        position: absolute;
+        left: calc(50vw - 5000px);
+        top: calc(50vh - 5000px);
+      }
+      .grid-bk {
+        width: 10000px;
+        height: 10000px;
+        background-size: 100px 100px;
+        transition: transform 0.2s ease;
+        position: absolute;
+        z-index: 100;
+        left: calc(50vw - 5000px);
+        top: calc(50vh - 5000px);
+        background-image: linear-gradient(
+            rgba(255, 255, 255, 0.1) 1px,
+            transparent 2px
+          ),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 2px);
+      }
+      .x-axis {
+        position: absolute;
+        top: 5000px;
+        width: 100%;
+        border-top: 5px solid #ffffff;
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        z-index: 1;
+      }
+      .y-axis {
+        position: absolute;
+        left: 5000px;
+        height: 100%;
+        border-left: 5px solid #ffffff;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        z-index: 1;
+      }
+      .card {
+        width: 200px;
+        height: 200px;
+        position: absolute;
+        left: 5000px;
+        top: 5000px;
+        background-color: #c813ce9a;
+        transition: transform 0.2s ease;
+        z-index: 44;
+      }
+      .active-point {
+        position: absolute;
+        left: 4996px;
+        top: 4996px;
+        width: 10px;
+        height: 10px;
+        border-radius: 5px;
+        background-color: #51d0e6;
+        transition: transform 0.2s ease;
+        z-index: 45;
+      }
+      .axis-item {
+        width: 100px;
+        height: 100px;
+        padding: 10px;
+        color: #ffffff;
+      }
+      .x-axis .axis-item {
+        padding-left: 15px;
+      }
+      #svg {
+        position: absolute;
+        z-index: 11;
+      }
+      #svg .basis {
+        transform: translate(5002px, 5002px);
+      }
+      .cmd {
+        width: 100%;
+        position: absolute;
+        top: 0;
+        display: flex;
+        flex-direction: row;
+        z-index: 1000;
+        padding: 20px 80px;
+        background-color: rgba(51, 51, 51, 0.81);
+      }
+      .vector-area,
+      .matrix-area,
+      .remark-area {
+        background-color: #fff;
+        border-radius: 8px;
+        padding: 20px;
+        padding-bottom: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-right: 40px;
+      }
+      .remark-area {
+        width: 200px;
+      }
+      .vector-item,
+      .matrix-row {
+        margin-bottom: 20px;
+      }
+      .vector-item input,
+      .matrix-item input {
+        width: 32px;
+        height: 24px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="cmd">
+        <div class="vector-area">
+          <div class="vector-item">
+            <input class="num-input" type="text" data-field="vector-x" />
+          </div>
+          <div class="vector-item">
+            <input class="num-input" type="text" data-field="vector-y" />
+          </div>
+          <div class="vector-item">
+            <span>向量</span>
+          </div>
+        </div>
+        <div class="matrix-area matrix-1">
+          <div class="matrix-row">
+            <div class="matrix-item">
+              <input class="num-input" type="text" data-field="matrix1-0" />
+              <input class="num-input" type="text" data-field="matrix1-2" />
+            </div>
+          </div>
+          <div class="matrix-row">
+            <div class="matrix-item">
+              <input class="num-input" type="text" data-field="matrix1-1" />
+              <input class="num-input" type="text" data-field="matrix1-3" />
+            </div>
+          </div>
+          <div class="matrix-row">
+            <span>紫块(矩阵1)</span>
+          </div>
+        </div>
+        <div class="matrix-area">
+          <div class="matrix-row">
+            <div class="matrix-item">
+              <input class="num-input" type="text" data-field="matrix0-0" />
+              <input class="num-input" type="text" data-field="matrix0-2" />
+            </div>
+          </div>
+          <div class="matrix-row">
+            <div class="matrix-item">
+              <input class="num-input" type="text" data-field="matrix0-1" />
+              <input class="num-input" type="text" data-field="matrix0-3" />
+            </div>
+          </div>
+          <div class="matrix-row">
+            <span>空间(矩阵0)</span>
+          </div>
+        </div>
+        <div class="remark-area">
+          <p>
+            空间矩阵第一列为基向量i帽(红色)，第二列为基向量j帽(绿色)，修改基向量，观察空间的变化
+          </p>
+        </div>
+        <div class="remark-area">
+          <p>修改矩阵1，观察紫色块的变化，修改空间矩阵，观察紫色块的变化</p>
+        </div>
+      </div>
+      <div class="grid-bk"></div>
+
+      <div class="grid">
+        <div class="axis x-axis"></div>
+        <div class="axis y-axis"></div>
+        <div class="active-point"></div>
+        <div class="card"></div>
+        <svg
+          id="svg"
+          width="10000px"
+          height="10000px"
+          version="1.1"
+          xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+        >
+          <marker
+            id="arrowI"
+            viewBox="0 0 10 10"
+            refX="8"
+            refY="5"
+            markerWidth="4"
+            markerHeight="4"
+            orient="auto"
+          >
+            <path
+              d="M 0 0 L 10 5 L 0 10 z"
+              style="fill: rgb(255, 0, 119)"
+            ></path>
+          </marker>
+          <marker
+            id="arrowJ"
+            viewBox="0 0 10 10"
+            refX="8"
+            refY="5"
+            markerWidth="4"
+            markerHeight="4"
+            orient="auto"
+          >
+            <path
+              d="M 0 0 L 10 5 L 0 10 z"
+              style="fill: rgb(104, 245, 3)"
+            ></path>
+          </marker>
+          <path
+            id="basisI"
+            class="basis"
+            d="M 0,0 L 100,0"
+            marker-end="url(#arrowI)"
+            style="stroke-width: 5px; fill: none; stroke: rgb(255, 0, 119)"
+          ></path>
+          <path
+            id="basisJ"
+            class="basis"
+            d="M 0,0 L 0,100"
+            marker-end="url(#arrowJ)"
+            style="stroke-width: 5px; fill: none; stroke: rgb(104, 245, 3)"
+          ></path>
+        </svg>
+      </div>
+    </div>
+    <script>
+      window.onload = () => {
+        const matrix = [1, 0, 0, 1];
+        const matrix1 = [1, 0, 0, 1];
+        const vector = [1, 1];
+        const grid = document.querySelector(".grid");
+        const card = document.querySelector(".card");
+        const gridBk = document.querySelector(".grid-bk");
+        const xAxis = document.querySelector(".x-axis");
+        const yAxis = document.querySelector(".y-axis");
+        const basisI = document.getElementById("basisI");
+        const activePoint = document.querySelector(".active-point");
+        const vectorXInput = document.querySelector("[data-field=vector-x]");
+        const vectorYInput = document.querySelector("[data-field=vector-y]");
+        const matrix0IxInput = document.querySelector("[data-field=matrix0-0]");
+        const matrix0IyInput = document.querySelector("[data-field=matrix0-1]");
+        const matrix0JxInput = document.querySelector("[data-field=matrix0-2]");
+        const matrix0JyInput = document.querySelector("[data-field=matrix0-3]");
+        const matrix1IxInput = document.querySelector("[data-field=matrix1-0]");
+        const matrix1IyInput = document.querySelector("[data-field=matrix1-1]");
+        const matrix1JxInput = document.querySelector("[data-field=matrix1-2]");
+        const matrix1JyInput = document.querySelector("[data-field=matrix1-3]");
+        vectorXInput.value = vector[0];
+        vectorYInput.value = vector[1];
+        matrix0IxInput.value = matrix[0];
+        matrix0IyInput.value = matrix[1];
+        matrix0JxInput.value = matrix[2];
+        matrix0JyInput.value = matrix[3];
+        matrix1IxInput.value = matrix1[0];
+        matrix1IyInput.value = matrix1[1];
+        matrix1JxInput.value = matrix1[2];
+        matrix1JyInput.value = matrix1[3];
+        activePoint.style.transform = `translate(${vector[0] * 100}px, ${
+          vector[1] * 100
+        }px)`;
+        xAxis.innerHTML = [...Array(100).keys()].map((n) => {
+          return `<div class="axis-item">${n - 50}</div>`;
+        });
+        yAxis.innerHTML = [...Array(100).keys()].map((n) => {
+          return `<div class="axis-item">${n === 50 ? "" : n - 50}</div>`;
+        });
+        document.querySelectorAll(".num-input").forEach((input) => {
+          input.addEventListener("blur", (e) => {
+            if (isNaN(Number(e.target.value))) {
+              e.target.value = "0";
+            }
+            const field = e.target.dataset.field;
+            if (field && field.indexOf("vector") !== -1) {
+              const flag = field.split("-")[1];
+              if (flag === "x") {
+                vector[0] = Number(e.target.value);
+              } else {
+                vector[1] = Number(e.target.value);
+              }
+            }
+            if (field && field.indexOf("matrix0") !== -1) {
+              const idx = field.split("-")[1];
+              matrix[idx] = Number(e.target.value);
+            }
+            if (field && field.indexOf("matrix1") !== -1) {
+              const idx = field.split("-")[1];
+              matrix1[idx] = Number(e.target.value);
+            }
+            render();
+          });
+        });
+        function render() {
+          grid.style.transform = `matrix(${matrix.join()},0,0)`;
+          grid.style.backgroundImage = `linear-gradient(#ffffff 1px, transparent ${
+            matrix[0] * 2
+          }px), linear-gradient(90deg, #ffffff 1px, transparent ${
+            matrix[3] * 2
+          }px)`;
+          activePoint.style.transform = `translate(${vector[0] * 100}px, ${
+            vector[1] * 100
+          }px)`;
+          card.style.transform = `matrix(${matrix1.join()},0,0)`;
+          console.log(Multiply(matrix, matrix1));
+        }
+        function Multiply(matrix0, matrix1) {
+          const [ix0, iy0, jx0, jy0] = matrix0;
+          const [ix1, iy1, jx1, jy1] = matrix1;
+          return [
+            ix0 * ix1 + jx0 * iy1,
+            iy0 * ix1 + jy0 * iy1,
+            ix0 * jx1 + jx0 * jy1,
+            iy0 * jx1 + jy0 * jy1,
+          ];
+        }
+        render();
+      };
+    </script>
+  </body>
+</html>
